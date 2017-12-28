@@ -29,17 +29,6 @@ dependencies:
 library:
   source-dirs: src
 
-executables:
-  llvm-strong-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - llvm-strong
-
 tests:
   llvm-strong-test:
     main:                Spec.hs
