@@ -24,6 +24,7 @@ dependencies:
 - llvm-hs
 - llvm-hs-pure
 - llvm-hs-pretty
+- singletons
 - text
 
 library:
