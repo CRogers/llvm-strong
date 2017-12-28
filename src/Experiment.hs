@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib where
+module Experiment where
         
 import Data.Text.Lazy.IO as T
 

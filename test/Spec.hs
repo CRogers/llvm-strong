@@ -1,2 +1,10 @@
+{-# OPTIONS_GHC -fdefer-type-errors #-}
+
+import Test.Hspec (hspec, describe, it)
+import Test.ShouldNotTypecheck (shouldNotTypecheck)
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = hspec $ do
+    describe "Type Tests" $ do
+        it "should not typecheck" $ do
+            shouldNotTypecheck ()

@@ -26,6 +26,7 @@ dependencies:
 - llvm-hs-pretty
 - singletons
 - text
+- indexed
 
 library:
   source-dirs: src
@@ -40,3 +41,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - llvm-strong
+    - should-not-typecheck
+    - hspec
