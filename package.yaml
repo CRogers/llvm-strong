@@ -41,5 +41,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - llvm-strong
-    - should-not-typecheck
     - hspec
