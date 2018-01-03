@@ -25,9 +25,26 @@ dependencies:
 - llvm-hs-pure
 - llvm-hs-pretty
 - singletons
-- singleton-nats
 - text
 - indexed
+
+default-extensions:
+- DefaultSignatures
+- EmptyCase
+- ExistentialQuantification
+- FlexibleContexts
+- FlexibleInstances
+- GADTs
+- InstanceSigs
+- KindSignatures
+- RankNTypes
+- ScopedTypeVariables
+- TemplateHaskell
+- TypeApplications
+- TypeFamilies
+- TypeInType
+- TypeOperators
+- UndecidableInstances
 
 library:
   source-dirs: src
