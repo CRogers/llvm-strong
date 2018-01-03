@@ -25,6 +25,7 @@ dependencies:
 - llvm-hs-pure
 - llvm-hs-pretty
 - singletons
+- singleton-nats
 - text
 - indexed
 

@@ -5,3 +5,4 @@ out/
 .idea/
 *.iml
 cabal.config
+cabal-helper*
