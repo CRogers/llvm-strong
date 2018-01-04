@@ -1,15 +1,11 @@
 module LLVM.Strong.AST.Internal.TypeIndexedList (
-    Lowerable(..),
     TypeIndexedList,
 ) where
 
 import qualified Data.Kind as Haskell (Type)
 
+import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
 import LLVM.Strong.AST.Type (LlvmType(..))
-
-class Lowerable f where
-    type Lower (f :: k -> Haskell.Type) :: Haskell.Type
-    lower :: f a -> Lower f
 
 data TypeIndexedList :: (LlvmType -> Haskell.Type) -> [LlvmType] -> Haskell.Type where
     TILNil :: TypeIndexedList f '[]

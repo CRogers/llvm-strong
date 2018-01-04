@@ -18,6 +18,8 @@ import Data.Word (Word32)
 import qualified LLVM.AST.AddrSpace as LLVM (AddrSpace(..))
 import qualified LLVM.AST.Type as LLVM (Type(..))
 
+import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
+
 data LlvmType
     = Void
     | Int Nat
@@ -34,6 +36,10 @@ type args :-> ret = Function args ret
 
 newtype Type (ty :: LlvmType) = Type { lowerType :: LLVM.Type }
     deriving (Show, Eq)
+
+instance Lowerable Type where
+    type Lower Type = LLVM.Type
+    lower = lowerType
 
 data Types :: [LlvmType] -> Haskell.Type where
     TNil :: Types '[]

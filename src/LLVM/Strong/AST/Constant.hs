@@ -9,7 +9,8 @@ import Data.Proxy (Proxy(..))
 import qualified LLVM.AST.Constant as LLVM (Constant(..))
 import qualified LLVM.AST.Type as LLVM (typeBits)
 
-import LLVM.Strong.AST.Internal.TypeIndexedList (Lowerable(..), TypeIndexedList)
+import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
+import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
 import LLVM.Strong.AST.Type (LlvmType(..), Type, lowerType)
 
 
