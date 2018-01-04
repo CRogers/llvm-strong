@@ -1,45 +1,22 @@
-{-# LANGUAGE TypeFamilyDependencies #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE TypeInType #-}
-{-# LANGUAGE PatternSynonyms #-}
-
-module LLVM.Strong.AST.NoSingletons (LlvmType(..), Type, Operand, Constant) where
+module LLVM.Strong.AST.Type (
+    LlvmType(..),
+    Type, lowerType,
+    Types(..),
+    ToList(..),
+    type1, type2, type3,
+    voidType, integerType, i1, i8, i32, pointerTo, functionType, structType, vectorType, arrayType, metadataType, labelType, tokenType
+    ) where
 
 import Prelude hiding (Int)
 
 import GHC.TypeLits (Nat, KnownNat, natVal)
 import qualified Data.Kind as Haskell (Type)
 import Data.Proxy (Proxy(..))
-import Data.Coerce (coerce)
 
 import Data.Word (Word32)
 
 import qualified LLVM.AST.AddrSpace as LLVM (AddrSpace(..))
 import qualified LLVM.AST.Type as LLVM (Type(..))
-import qualified LLVM.AST.Operand as LLVM (Operand(..))
-import qualified LLVM.AST.Constant as LLVM (Constant(..))
-
-data Types :: [LlvmType] -> Haskell.Type where
-    TNil :: Types '[]
-    TCons :: Type a -> Types as -> Types (a ': as)
-
-class ToList as where
-    toList :: Types as -> [LLVM.Type]
-
-instance ToList '[] where
-    toList _ = [] 
-
-instance ToList as => ToList (a ': as) where
-    toList (TCons head tail) = llvmType head : toList tail
-
-type1 :: Type a -> Types '[a]
-type1 a = a `TCons` TNil
-
-type2 :: Type a -> Type b -> Types '[a, b]
-type2 a b = a `TCons` type1 b
-
-type3 :: Type a -> Type b -> Type c -> Types '[a, b, c]
-type3 a b c = a `TCons` type2 b c
 
 data LlvmType
     = Void
@@ -55,11 +32,30 @@ data LlvmType
 
 type args :-> ret = Function args ret
 
-newtype Type (ty :: LlvmType) = Type { llvmType :: LLVM.Type }
+newtype Type (ty :: LlvmType) = Type { lowerType :: LLVM.Type }
     deriving (Show, Eq)
 
-lowerOperand :: Operand ty -> LLVM.Operand
-lowerOperand = coerce
+data Types :: [LlvmType] -> Haskell.Type where
+    TNil :: Types '[]
+    TCons :: Type a -> Types as -> Types (a ': as)
+
+class ToList as where
+    toList :: Types as -> [LLVM.Type]
+
+instance ToList '[] where
+    toList _ = [] 
+
+instance ToList as => ToList (a ': as) where
+    toList (TCons head tail) = lowerType head : toList tail
+
+type1 :: Type a -> Types '[a]
+type1 a = a `TCons` TNil
+
+type2 :: Type a -> Type b -> Types '[a, b]
+type2 a b = a `TCons` type1 b
+
+type3 :: Type a -> Type b -> Type c -> Types '[a, b, c]
+type3 a b c = a `TCons` type2 b c
 
 voidType :: Type Void
 voidType = Type LLVM.VoidType
@@ -83,16 +79,16 @@ pointerTo :: Type ty -> Type (Pointer ty)
 pointerTo (Type ty) = Type (LLVM.PointerType ty (LLVM.AddrSpace 0))
 
 functionType :: ToList args => Types args -> Type ret -> Type (args :-> ret)
-functionType argTypes retType = Type (LLVM.FunctionType (llvmType retType) (toList argTypes) False)
+functionType argTypes retType = Type (LLVM.FunctionType (lowerType retType) (toList argTypes) False)
 
 structType :: ToList elements => Types elements -> Type (Struct elements)
 structType elementTypes = Type (LLVM.StructureType False (toList elementTypes))
 
 vectorType :: forall n ty. KnownNat n => Type ty -> Type (Vector n ty)
-vectorType elementType = Type (LLVM.VectorType (knownNatToWord32 (Proxy :: Proxy n)) (llvmType elementType))
+vectorType elementType = Type (LLVM.VectorType (knownNatToWord32 (Proxy :: Proxy n)) (lowerType elementType))
 
 arrayType :: forall n ty. KnownNat n => Type ty -> Type (Vector n ty)
-arrayType elementType = Type (LLVM.ArrayType (fromInteger $ natVal (Proxy :: Proxy n)) (llvmType elementType))
+arrayType elementType = Type (LLVM.ArrayType (fromInteger $ natVal (Proxy :: Proxy n)) (lowerType elementType))
 
 metadataType :: Type Metadata
 metadataType = Type LLVM.MetadataType
@@ -102,7 +98,3 @@ labelType = Type LLVM.LabelType
 
 tokenType :: Type Token
 tokenType = Type LLVM.TokenType
-
-newtype Operand (ty :: LlvmType) = Operand LLVM.Operand
-newtype Constant (ty :: LlvmType) = Constant LLVM.Constant
-
