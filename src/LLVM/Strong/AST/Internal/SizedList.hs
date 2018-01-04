@@ -1,17 +1,21 @@
-module LLVM.Strong.AST.Internal.SizedList where
+module LLVM.Strong.AST.Internal.SizedList (
+    SizedList,
+) where
 
 import GHC.TypeLits (Nat, type (+))
 import qualified Data.Kind as Haskell (Type)
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
 
-data SizedList :: Nat -> Haskell.Type -> Haskell.Type where
-    SLNil :: SizedList 0 a
-    SLCons :: a -> SizedList n a -> SizedList (n + 1) a
+data SizedList :: Haskell.Type -> Nat -> Haskell.Type where
+    SLNil :: SizedList a 0
+    SLCons :: a -> SizedList a n -> SizedList a (n + 1)
 
--- instanceLowerable SizedList 
+instance Lowerable (SizedList a) where
+    type Lower (SizedList a) = [a]
+    lower = lowerSizedList
 
-lowerSizedList :: SizedList n a -> [a]
+lowerSizedList :: SizedList a n -> [a]
 lowerSizedList list = case list of
     SLNil -> []
     SLCons a as -> a : lowerSizedList as

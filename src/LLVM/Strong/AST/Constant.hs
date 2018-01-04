@@ -11,7 +11,7 @@ import qualified LLVM.AST.Type as LLVM (typeBits)
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
 import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
-import LLVM.Strong.AST.Internal.SizedList (SizedList, lowerSizedList)
+import LLVM.Strong.AST.Internal.SizedList (SizedList)
 import LLVM.Strong.AST.Type (LlvmType(..), Type)
 
 
@@ -36,11 +36,11 @@ null ty = Constant (LLVM.Null $ lower ty)
 struct :: Constants elements -> Constant (Struct elements)
 struct constants = Constant (LLVM.Struct Nothing False $ lower constants)
 
-array :: Type ty -> SizedList n (Constant ty) -> Constant (Array n ty)
-array ty constants = Constant (LLVM.Array (lower ty) (map lowerConstant $ lowerSizedList constants))
+array :: Type ty -> SizedList (Constant ty) n -> Constant (Array n ty)
+array ty constants = Constant (LLVM.Array (lower ty) (map lowerConstant $ lower constants))
 
-vector :: SizedList n (Constant ty) -> Constant (Vector n ty)
-vector constants = Constant (LLVM.Vector (map lowerConstant $ lowerSizedList constants))
+vector :: SizedList (Constant ty) n -> Constant (Vector n ty)
+vector constants = Constant (LLVM.Vector (map lowerConstant $ lower constants))
 
 undef :: Type ty -> Constant ty
 undef ty = Constant $ LLVM.Undef (lower ty)
