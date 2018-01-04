@@ -2,7 +2,7 @@ module LLVM.Strong.AST.Constant where
 
 import Prelude hiding (Int)
 
-import GHC.TypeLits (Nat, KnownNat, natVal, type (+))
+import GHC.TypeLits (Nat, KnownNat, natVal, type (+), type (-))
 import qualified Data.Kind as Haskell (Type)
 import Data.Proxy (Proxy(..))
 
@@ -14,37 +14,43 @@ import LLVM.Strong.AST.Type (LlvmType(..), Type, lowerType)
 newtype Constant (ty :: LlvmType) = Constant { lowerConstant :: LLVM.Constant }
 
 
-data Constants :: Nat -> [LlvmType] -> Haskell.Type where
-    CNil :: Constants 0 '[]
-    CCons :: Constant a -> Constants n as -> Constants (n + 1) (a ': as)
+data Constants :: [LlvmType] -> Haskell.Type where
+    CNil :: Constants '[]
+    CCons :: Constant a -> Constants as -> Constants (a ': as)
 
-class ToList as where
-    toList :: Constants n as -> [LLVM.Constant]
-
-instance ToList '[] where
-    toList _ = [] 
-
-instance ToList as => ToList (a ': as) where
-    toList (CCons head tail) = lowerConstant head : toList tail
+lowerConstants :: Constants vals -> [LLVM.Constant]
+lowerConstants constants = case constants of
+    CNil -> []
+    CCons c cs -> lowerConstant c : lowerConstants cs
 
 
-int :: forall n. KnownNat n => Integer -> Constant (Int n)
-int number = Constant (LLVM.Int (fromInteger $ natVal (Proxy :: Proxy n)) number)
+data SizedList :: Nat -> Haskell.Type -> Haskell.Type where
+    SLNil :: SizedList 0 a
+    SLCons :: a -> SizedList n a -> SizedList (n + 1) a
 
-intFromTy :: Type (Int n) -> Integer -> Constant (Int n)
-intFromTy intTy number = Constant (LLVM.Int (LLVM.typeBits $ lowerType intTy) number)
+lowerSizedList :: SizedList n a -> [a]
+lowerSizedList list = case list of
+    SLNil -> []
+    SLCons a as -> a : lowerSizedList as
+
+
+int' :: forall n. KnownNat n => Integer -> Constant (Int n)
+int' number = Constant (LLVM.Int (fromInteger $ natVal (Proxy :: Proxy n)) number)
+
+int :: Type (Int n) -> Integer -> Constant (Int n)
+int intTy number = Constant (LLVM.Int (LLVM.typeBits $ lowerType intTy) number)
 
 null :: Type ty -> Constant ty
 null ty = Constant (LLVM.Null $ lowerType ty)
 
-struct :: ToList elements => Constants n elements -> Constant (Struct elements)
-struct elementConstants = Constant (LLVM.Struct Nothing False $ toList elementConstants)
+struct :: Constants elements -> Constant (Struct elements)
+struct constants = Constant (LLVM.Struct Nothing False $ lowerConstants constants)
 
-array :: Type ty -> [Constant ty] -> Constant (Array n ty)
-array ty constants = Constant (LLVM.Array (lowerType ty) (map lowerConstant constants))
+array :: Type ty -> SizedList n (Constant ty) -> Constant (Array n ty)
+array ty constants = Constant (LLVM.Array (lowerType ty) (map lowerConstant $ lowerSizedList constants))
 
-vector :: [Constant ty] -> Constant (Vector n ty)
-vector constants = Constant (LLVM.Vector (map lowerConstant constants))
+vector :: SizedList n (Constant ty) -> Constant (Vector n ty)
+vector constants = Constant (LLVM.Vector (map lowerConstant $ lowerSizedList constants))
 
 undef :: Type ty -> Constant ty
 undef ty = Constant $ LLVM.Undef (lowerType ty)
