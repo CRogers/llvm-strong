@@ -11,7 +11,7 @@ import qualified LLVM.AST.Type as LLVM (typeBits)
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
 import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
-import LLVM.Strong.AST.Type (LlvmType(..), Type, lowerType)
+import LLVM.Strong.AST.Type (LlvmType(..), Type)
 
 
 newtype Constant (ty :: LlvmType) = Constant { lowerConstant :: LLVM.Constant }
@@ -37,19 +37,19 @@ int' :: forall n. KnownNat n => Integer -> Constant (Int n)
 int' number = Constant (LLVM.Int (fromInteger $ natVal (Proxy :: Proxy n)) number)
 
 int :: Type (Int n) -> Integer -> Constant (Int n)
-int intTy number = Constant (LLVM.Int (LLVM.typeBits $ lowerType intTy) number)
+int intTy number = Constant (LLVM.Int (LLVM.typeBits $ lower intTy) number)
 
 null :: Type ty -> Constant ty
-null ty = Constant (LLVM.Null $ lowerType ty)
+null ty = Constant (LLVM.Null $ lower ty)
 
 struct :: Constants elements -> Constant (Struct elements)
 struct constants = Constant (LLVM.Struct Nothing False $ lower constants)
 
 array :: Type ty -> SizedList n (Constant ty) -> Constant (Array n ty)
-array ty constants = Constant (LLVM.Array (lowerType ty) (map lowerConstant $ lowerSizedList constants))
+array ty constants = Constant (LLVM.Array (lower ty) (map lowerConstant $ lowerSizedList constants))
 
 vector :: SizedList n (Constant ty) -> Constant (Vector n ty)
 vector constants = Constant (LLVM.Vector (map lowerConstant $ lowerSizedList constants))
 
 undef :: Type ty -> Constant ty
-undef ty = Constant $ LLVM.Undef (lowerType ty)
+undef ty = Constant $ LLVM.Undef (lower ty)

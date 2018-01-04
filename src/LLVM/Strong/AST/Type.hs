@@ -1,9 +1,7 @@
 module LLVM.Strong.AST.Type (
     LlvmType(..),
-    Type, lowerType,
+    Type,
     Types(..),
-    ToList(..),
-    type1, type2, type3,
     voidType, integerType, i1, i8, i32, pointerTo, functionType, structType, vectorType, arrayType, metadataType, labelType, tokenType
     ) where
 
@@ -19,6 +17,7 @@ import qualified LLVM.AST.AddrSpace as LLVM (AddrSpace(..))
 import qualified LLVM.AST.Type as LLVM (Type(..))
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
+import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
 
 data LlvmType
     = Void
@@ -34,34 +33,14 @@ data LlvmType
 
 type args :-> ret = Function args ret
 
-newtype Type (ty :: LlvmType) = Type { lowerType :: LLVM.Type }
+newtype Type (ty :: LlvmType) = Type LLVM.Type
     deriving (Show, Eq)
 
 instance Lowerable Type where
     type Lower Type = LLVM.Type
-    lower = lowerType
+    lower (Type ty) = ty
 
-data Types :: [LlvmType] -> Haskell.Type where
-    TNil :: Types '[]
-    TCons :: Type a -> Types as -> Types (a ': as)
-
-class ToList as where
-    toList :: Types as -> [LLVM.Type]
-
-instance ToList '[] where
-    toList _ = [] 
-
-instance ToList as => ToList (a ': as) where
-    toList (TCons head tail) = lowerType head : toList tail
-
-type1 :: Type a -> Types '[a]
-type1 a = a `TCons` TNil
-
-type2 :: Type a -> Type b -> Types '[a, b]
-type2 a b = a `TCons` type1 b
-
-type3 :: Type a -> Type b -> Type c -> Types '[a, b, c]
-type3 a b c = a `TCons` type2 b c
+type Types = TypeIndexedList Type
 
 voidType :: Type Void
 voidType = Type LLVM.VoidType
@@ -84,17 +63,17 @@ i32 = integerType @32
 pointerTo :: Type ty -> Type (Pointer ty)
 pointerTo (Type ty) = Type (LLVM.PointerType ty (LLVM.AddrSpace 0))
 
-functionType :: ToList args => Types args -> Type ret -> Type (args :-> ret)
-functionType argTypes retType = Type (LLVM.FunctionType (lowerType retType) (toList argTypes) False)
+functionType :: Types args -> Type ret -> Type (args :-> ret)
+functionType argTypes retType = Type (LLVM.FunctionType (lower retType) (lower argTypes) False)
 
-structType :: ToList elements => Types elements -> Type (Struct elements)
-structType elementTypes = Type (LLVM.StructureType False (toList elementTypes))
+structType :: Types elements -> Type (Struct elements)
+structType elementTypes = Type (LLVM.StructureType False (lower elementTypes))
 
 vectorType :: forall n ty. KnownNat n => Type ty -> Type (Vector n ty)
-vectorType elementType = Type (LLVM.VectorType (knownNatToWord32 (Proxy :: Proxy n)) (lowerType elementType))
+vectorType elementType = Type (LLVM.VectorType (knownNatToWord32 (Proxy :: Proxy n)) (lower elementType))
 
 arrayType :: forall n ty. KnownNat n => Type ty -> Type (Vector n ty)
-arrayType elementType = Type (LLVM.ArrayType (fromInteger $ natVal (Proxy :: Proxy n)) (lowerType elementType))
+arrayType elementType = Type (LLVM.ArrayType (fromInteger $ natVal (Proxy :: Proxy n)) (lower elementType))
 
 metadataType :: Type Metadata
 metadataType = Type LLVM.MetadataType
