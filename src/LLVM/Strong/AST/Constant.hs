@@ -13,16 +13,22 @@ import LLVM.Strong.AST.Type (LlvmType(..), Type, lowerType)
 
 newtype Constant (ty :: LlvmType) = Constant { lowerConstant :: LLVM.Constant }
 
+type family Lower (f :: LlvmType -> Haskell.Type) :: Haskell.Type
 
-data Constants :: [LlvmType] -> Haskell.Type where
-    CNil :: Constants '[]
-    CCons :: Constant a -> Constants as -> Constants (a ': as)
+data TypeIndexedList :: (LlvmType -> Haskell.Type) -> [LlvmType] -> Haskell.Type where
+    TILNil :: TypeIndexedList f '[]
+    TILCons :: f a -> TypeIndexedList f as -> TypeIndexedList f (a ': as)
+
+type Constants = TypeIndexedList Constant
+type instance Lower Constant = LLVM.Constant
+
+lowerTypeIndexedList :: (forall a. f a -> Lower f) -> TypeIndexedList f vals -> [Lower f]
+lowerTypeIndexedList f constants = case constants of
+    TILNil -> []
+    TILCons c cs -> f c : lowerTypeIndexedList f cs
 
 lowerConstants :: Constants vals -> [LLVM.Constant]
-lowerConstants constants = case constants of
-    CNil -> []
-    CCons c cs -> lowerConstant c : lowerConstants cs
-
+lowerConstants = lowerTypeIndexedList lowerConstant
 
 data SizedList :: Nat -> Haskell.Type -> Haskell.Type where
     SLNil :: SizedList 0 a
