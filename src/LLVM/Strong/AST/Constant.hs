@@ -2,7 +2,7 @@ module LLVM.Strong.AST.Constant where
 
 import Prelude hiding (Int)
 
-import GHC.TypeLits (Nat, KnownNat, natVal, type (+), type (-))
+import GHC.TypeLits (Nat, KnownNat, natVal, type (+))
 import qualified Data.Kind as Haskell (Type)
 import Data.Proxy (Proxy(..))
 
@@ -11,6 +11,7 @@ import qualified LLVM.AST.Type as LLVM (typeBits)
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
 import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
+import LLVM.Strong.AST.Internal.SizedList (SizedList, lowerSizedList)
 import LLVM.Strong.AST.Type (LlvmType(..), Type)
 
 
@@ -21,16 +22,6 @@ type Constants = TypeIndexedList Constant
 instance Lowerable Constant where
     type Lower Constant = LLVM.Constant
     lower = lowerConstant
-
-
-data SizedList :: Nat -> Haskell.Type -> Haskell.Type where
-    SLNil :: SizedList 0 a
-    SLCons :: a -> SizedList n a -> SizedList (n + 1) a
-
-lowerSizedList :: SizedList n a -> [a]
-lowerSizedList list = case list of
-    SLNil -> []
-    SLCons a as -> a : lowerSizedList as
 
 
 int' :: forall n. KnownNat n => Integer -> Constant (Int n)
