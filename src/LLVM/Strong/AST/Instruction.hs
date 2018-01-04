@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module LLVM.Strong.AST.Instruction where
+module LLVM.Strong.AST.Instruction (pattern SInt) where
 
 import Prelude hiding (Int)
 
@@ -11,7 +11,6 @@ import Data.Singletons (Apply)
 import Data.Singletons.Prelude.List (SList, Sing(SCons, SNil), Map)
 import Data.Singletons.TypeLits
 import Data.Singletons.TH (singletons, genDefunSymbols)
-import qualified GHC.TypeLits as TypeLits
 import Data.Kind (Type)
 
 $(singletons [d|
