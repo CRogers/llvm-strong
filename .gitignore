@@ -6,3 +6,4 @@ out/
 *.iml
 cabal.config
 cabal-helper*
+.DS_Store

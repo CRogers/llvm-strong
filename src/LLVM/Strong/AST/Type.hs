@@ -2,6 +2,7 @@ module LLVM.Strong.AST.Type (
     LlvmType(..),
     Type,
     Types(..),
+    (:->),
     voidType, integerType, i1, i8, i32, pointerTo, functionType, structType, vectorType, arrayType, metadataType, labelType, tokenType
     ) where
 

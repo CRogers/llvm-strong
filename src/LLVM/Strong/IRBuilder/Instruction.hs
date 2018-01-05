@@ -5,13 +5,16 @@ module LLVM.Strong.IRBuilder.Instruction where
 import Prelude hiding (Int)
 
 import qualified LLVM.AST.Operand as LLVM (Operand)
+import qualified LLVM.AST.ParameterAttribute as LLVM (ParameterAttribute(..))
 import LLVM.IRBuilder.Monad (MonadIRBuilder)
 import qualified LLVM.IRBuilder.Instruction as LLVM
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
-import LLVM.Strong.AST.Constant (int, int')
+import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
+import LLVM.Strong.AST.Constant (undef)
 import LLVM.Strong.AST.Operand (Operand(..), constant)
-import LLVM.Strong.AST.Type (LlvmType(..), Type, i8, i32, pointerTo)
+import LLVM.Strong.AST.Type (LlvmType(..), Type, (:->), i8, i32, pointerTo)
+import LLVM.Strong.IRBuilder.Constant (int8, int32)
 
 binop ::
     MonadIRBuilder m => 
@@ -42,12 +45,29 @@ store value pointer = LLVM.store (lower value) 0 (lower pointer)
 inttoptr :: MonadIRBuilder m => Operand (Int i) -> Type (Pointer p) -> m (Operand (Pointer p))
 inttoptr int pointerType = Operand <$> LLVM.inttoptr (lower int) (lower pointerType)
 
+type LoweredArg = (LLVM.Operand, [LLVM.ParameterAttribute])
+newtype Arg (ty :: LlvmType) = Arg LoweredArg
+
+instance Lowerable Arg where
+    type Lower Arg = LoweredArg
+    lower (Arg lowered) = lowered
+
+type Args = TypeIndexedList Arg
+
+argOf :: Operand ty -> [LLVM.ParameterAttribute] -> Arg ty
+argOf operand attributes = Arg $ (lower operand, attributes)
+
+call :: MonadIRBuilder m => Operand (args :-> ret) -> Args args -> m (Operand ret)
+call f args = Operand <$> LLVM.call (lower f) (lower args)
+
 foo :: MonadIRBuilder m => m _
 foo = do
-    let x = constant (int' 4)
-    let y = constant (int i8 5)
+    let x = int8 4
+    let y = int8 5
     v <- add x y
-    pointer <- alloca i8 (Just (constant $ int i32 1)) 0
+    pointer <- alloca i8 (Just $ int32 1) 0
     -- pointer <- inttoptr (constant (int i32 12)) (pointerTo i8)
     store v pointer
     load pointer
+
+    -- let f = constant $ undef $ 
