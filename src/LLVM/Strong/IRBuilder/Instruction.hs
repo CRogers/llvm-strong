@@ -10,10 +10,10 @@ import LLVM.IRBuilder.Monad (MonadIRBuilder)
 import qualified LLVM.IRBuilder.Instruction as LLVM
 
 import LLVM.Strong.AST.Internal.Lowerable (Lowerable(..))
-import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList)
+import LLVM.Strong.AST.Internal.TypeIndexedList (TypeIndexedList, list1)
 import LLVM.Strong.AST.Constant (undef)
 import LLVM.Strong.AST.Operand (Operand(..), constant)
-import LLVM.Strong.AST.Type (LlvmType(..), Type, (:->), i8, i32, pointerTo)
+import LLVM.Strong.AST.Type (LlvmType(..), Type, (:->), i8, i32, pointerTo, functionType)
 import LLVM.Strong.IRBuilder.Constant (int8, int32)
 
 binop ::
@@ -69,5 +69,7 @@ foo = do
     -- pointer <- inttoptr (constant (int i32 12)) (pointerTo i8)
     store v pointer
     load pointer
+
+    call (constant $ undef $ functionType (list1 i8) i32) (list1 (argOf x []))  
 
     -- let f = constant $ undef $ 

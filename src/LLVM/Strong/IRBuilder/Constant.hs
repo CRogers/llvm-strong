@@ -4,7 +4,7 @@ import Prelude hiding (Int)
 
 import LLVM.Strong.AST.Constant (int, int')
 import LLVM.Strong.AST.Operand (Operand, constant)
-import LLVM.Strong.AST.Type (LlvmType(..))
+import LLVM.Strong.AST.Type (LlvmType(..), Type)
 
 bit :: Integer -> Operand (Int 1)
 bit = constant . int' @1
